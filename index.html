@@ -289,15 +289,17 @@
 
   /* ── обложка при открытии ── */
   #cover{position:fixed; inset:0; z-index:50; background:#EEF1EA;
-         display:flex; flex-direction:column; align-items:center; justify-content:center;
-         gap:18px; padding:24px; transition:opacity .5s ease;}
+         display:flex; align-items:center; justify-content:center;
+         overflow:hidden; transition:opacity .5s ease;}
   #cover.gone{opacity:0; pointer-events:none;}
-  #cover img{width:100%; max-width:420px; border-radius:14px; display:block;
-             box-shadow:0 14px 34px -14px rgba(30,42,34,.45);}
-  .cover-t{font-family:'Roboto Slab',Georgia,serif; font-size:20px; font-weight:700;
-           color:#1E4A30; letter-spacing:.01em;}
-  .cover-s{font-size:11.5px; color:#5B6B5F; text-transform:uppercase; letter-spacing:.12em;
-           margin-top:-10px;}
+  /* размытая копия картинки заполняет экран целиком, чтобы не было пустых полей */
+  #cover::before{content:""; position:absolute; inset:-40px;
+         background:url("cover.jpg") center / cover no-repeat;
+         filter:blur(26px) saturate(1.05); transform:scale(1.12); opacity:.9;}
+  #cover::after{content:""; position:absolute; inset:0;
+         background:linear-gradient(180deg, rgba(238,241,234,.30) 0%, rgba(238,241,234,.05) 45%, rgba(238,241,234,.42) 100%);}
+  #cover img{position:relative; z-index:1; width:100%; display:block;
+             box-shadow:0 18px 44px -16px rgba(20,32,26,.55);}
 
   /* ── заглушка при неудачной загрузке данных ── */
   .stub{padding:48px 26px; text-align:center;}
@@ -311,8 +313,6 @@
 
 <div id="cover">
   <img src="cover.jpg" alt="Гроссбух">
-  <div class="cover-t">Гроссбух</div>
-  <div class="cover-s">учёт аренды</div>
 </div>
 
 <div class="shell">
