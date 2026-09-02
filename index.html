@@ -50,18 +50,19 @@
   .arr:disabled{color:#C1C8BE; cursor:default;}
 
   /* ── главная цифра ── */
-  .hero{padding:22px 22px 18px; border-bottom:1px solid #C9D1C2;
+  .hero{padding:26px 22px 18px; border-bottom:1px solid #C9D1C2;
         position:relative; overflow:hidden; isolation:isolate;}
   .hero::before{content:""; position:absolute; inset:0; z-index:-1;
-        background:url("bg.jpg") center 62% / cover no-repeat; opacity:.52;}
+        background:url("bg.jpg") center 30% / cover no-repeat; opacity:1;}
   .hero::after{content:""; position:absolute; inset:0; z-index:-1;
-        background:linear-gradient(180deg, rgba(238,241,234,.42) 0%, rgba(238,241,234,.16) 42%, rgba(238,241,234,.74) 100%);}
-  .hero-label{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:#4A5A4E;
-              margin-bottom:6px; position:relative; font-weight:600;}
-  .hero-value{font-family:'IBM Plex Mono',ui-monospace,monospace; font-weight:600; font-size:38px;
-              letter-spacing:-.01em; color:#255B39; position:relative;
-              text-shadow:0 1px 2px rgba(255,255,255,.95), 0 0 12px rgba(255,255,255,.7);}
-  .hero-hint{font-size:11.5px; color:#3F4F44; margin-top:7px; line-height:1.45; position:relative;}
+        background:linear-gradient(180deg, rgba(238,241,234,0) 0%, rgba(238,241,234,.10) 38%, rgba(238,241,234,.62) 72%, rgba(238,241,234,.92) 100%);}
+  .hero-label{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:#FFFFFF;
+              margin-bottom:6px; position:relative; font-weight:700;
+              text-shadow:0 1px 4px rgba(12,44,60,.6);}
+  .hero-value{font-family:'IBM Plex Mono',ui-monospace,monospace; font-weight:700; font-size:38px;
+              letter-spacing:-.01em; color:#FFFFFF; position:relative;
+              text-shadow:0 2px 5px rgba(12,44,60,.55), 0 1px 12px rgba(12,44,60,.35);}
+  .hero-hint{font-size:11.5px; color:#2C3A31; margin-top:10px; line-height:1.45; position:relative;}
 
   /* ── раскладка ── */
   .tabs{display:grid; grid-template-columns:repeat(5,1fr); gap:0; padding:0;
