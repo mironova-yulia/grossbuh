@@ -287,6 +287,18 @@
   .foot{margin:16px 22px 24px; padding:11px 14px; border:1.5px solid #1E2A22; display:flex; gap:8px;}
   .foot-txt{font-size:11.5px; color:#5B6B5F; font-style:italic; line-height:1.45;}
 
+  /* ── обложка при открытии ── */
+  #cover{position:fixed; inset:0; z-index:50; background:#EEF1EA;
+         display:flex; flex-direction:column; align-items:center; justify-content:center;
+         gap:18px; padding:24px; transition:opacity .5s ease;}
+  #cover.gone{opacity:0; pointer-events:none;}
+  #cover img{width:100%; max-width:420px; border-radius:14px; display:block;
+             box-shadow:0 14px 34px -14px rgba(30,42,34,.45);}
+  .cover-t{font-family:'Roboto Slab',Georgia,serif; font-size:20px; font-weight:700;
+           color:#1E4A30; letter-spacing:.01em;}
+  .cover-s{font-size:11.5px; color:#5B6B5F; text-transform:uppercase; letter-spacing:.12em;
+           margin-top:-10px;}
+
   /* ── заглушка при неудачной загрузке данных ── */
   .stub{padding:48px 26px; text-align:center;}
   .stub-i{font-size:30px; margin-bottom:12px;}
@@ -296,6 +308,12 @@
           padding:9px 18px; font-family:'Roboto Slab',Georgia,serif; font-size:12px; font-weight:700;
           cursor:pointer;}
 </style>
+
+<div id="cover">
+  <img src="cover.jpg" alt="Гроссбух">
+  <div class="cover-t">Гроссбух</div>
+  <div class="cover-s">учёт аренды</div>
+</div>
 
 <div class="shell">
   <p class="eyebrow">Учёт аренды</p>
@@ -748,6 +766,13 @@
       b[i].addEventListener("click", function () { setView(this.getAttribute("data-v")); });
   }
 
+  function hideCover(){
+    var c = document.getElementById("cover");
+    if (!c) return;
+    c.className = "gone";
+    setTimeout(function(){ if (c.parentNode) c.parentNode.removeChild(c); }, 600);
+  }
+
   function start(d){
     D = d;
     last = Math.max(0, (D["период"]["последний_закрытый_месяц"] || 1) - 1);
@@ -759,9 +784,11 @@
     renderMonth();
     show();
     setView("main");
+    setTimeout(hideCover, 1400);
   }
 
   function fail(msg){
+    hideCover();
     $("app").style.display  = "none";
     $("stub").style.display = "";
     $("stubText").textContent = msg;
