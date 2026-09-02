@@ -1,0 +1,780 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Гроссбух</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&family=Roboto+Slab:wght@500;600;700&display=swap">
+<style>
+
+  :root{
+    --shell-bg:#F3F4F1; --shell-text:#1B1D1B; --shell-text2:#63675E; --shell-accent:#2C4A6E;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --shell-bg:#15171A; --shell-text:#ECEEEA; --shell-text2:#9BA09A; --shell-accent:#7FA8C9;
+    }
+  }
+  :root[data-theme="dark"]{
+    --shell-bg:#15171A; --shell-text:#ECEEEA; --shell-text2:#9BA09A; --shell-accent:#7FA8C9;
+  }
+
+  *{box-sizing:border-box;}
+  body{background:var(--shell-bg); color:var(--shell-text);
+       font-family:'Public Sans',-apple-system,'Segoe UI',Arial,sans-serif; margin:0;}
+
+  .shell{max-width:520px; margin:0 auto; padding:40px 20px 64px;
+         display:flex; flex-direction:column; align-items:center; gap:18px;}
+  .eyebrow{font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+           color:var(--shell-accent); margin:0; text-align:center;}
+  h1{font-size:clamp(24px,5vw,30px); margin:0; text-align:center; letter-spacing:-.01em;}
+  .note{font-size:12.5px; color:var(--shell-text2); text-align:center; margin:0; max-width:420px; line-height:1.5;}
+
+  .phone{width:390px; max-width:min(94vw, 390px); height:780px; max-height:82vh; overflow-y:auto; overflow-x:hidden;
+         border-radius:34px; box-shadow:0 30px 60px -20px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.06);
+         -ms-overflow-style:none; scrollbar-width:none;
+         background:#EEF1EA; color:#1E2A22; font-family:'Public Sans',Arial,sans-serif;}
+  .phone::-webkit-scrollbar{display:none;}
+  .num{font-variant-numeric:tabular-nums; font-family:'IBM Plex Mono',ui-monospace,'Courier New',monospace;}
+  .grabber{width:36px; height:4px; border-radius:99px; margin:10px auto 2px; background:#1E2A22; opacity:.5;}
+
+  .head{padding:12px 22px 9px; display:flex; justify-content:space-between; align-items:baseline;
+        border-bottom:2px solid #1E2A22;}
+  .head-title{font-family:'Roboto Slab',Georgia,serif; font-weight:700; font-size:15px; letter-spacing:.02em;}
+  .head-period{font-size:11px; color:#5B6B5F; text-transform:uppercase; letter-spacing:.08em;
+               min-width:74px; text-align:center; display:inline-block;}
+  .nav{display:flex; align-items:center; gap:2px;}
+  .arr{border:0; background:transparent; color:#3F6652; font-size:19px; line-height:1;
+       padding:2px 7px; cursor:pointer; font-family:inherit;}
+  .arr:disabled{color:#C1C8BE; cursor:default;}
+
+  /* ── главная цифра ── */
+  .hero{padding:22px 22px 16px; border-bottom:1px solid #C9D1C2;}
+  .hero-label{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:#5B6B5F; margin-bottom:6px;}
+  .hero-value{font-family:'IBM Plex Mono',ui-monospace,monospace; font-weight:600; font-size:38px;
+              letter-spacing:-.01em; color:#2F6B45;}
+  .hero-hint{font-size:11.5px; color:#5B6B5F; margin-top:7px; line-height:1.45;}
+
+  /* ── раскладка ── */
+  .tabs{display:grid; grid-template-columns:repeat(5,1fr); gap:0; padding:0;
+        border-bottom:1px solid #C9D1C2; background:#F6F8F4;}
+  .tab{padding:9px 1px; font-size:10px; border:0; border-right:1px solid #D5DCD0; border-radius:0;
+       background:#F6F8F4; color:#5B6B5F; font-family:'Roboto Slab',Georgia,serif;
+       font-weight:600; letter-spacing:.01em; text-align:center;
+       cursor:pointer; transition:background .12s, color .12s;}
+  .tab:last-child{border-right:0;}
+  .tab:hover{color:#3F6652;}
+  .tab.on{background:#3F6652; color:#EEF1EA;}
+  .period{padding:9px 22px 0; font-size:10.5px; color:#5B6B5F; font-style:italic;}
+
+  .calc{padding:6px 22px 14px; border-bottom:1px solid #C9D1C2;}
+  .calc-row{display:flex; align-items:baseline; justify-content:space-between; padding:7px 0; font-size:13px; gap:8px;}
+  .calc-row .lbl{flex:1; min-width:0; color:#3A4A3F;}
+  .calc-row .val{flex-shrink:0; text-align:right;
+        font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:13.5px; font-variant-numeric:tabular-nums;}
+  .calc-row.minus .val{color:#A23B2B;}
+  .calc-row.sub{border-top:1px dashed #A8B5A2; margin-top:4px; padding-top:8px; font-weight:600;}
+  .calc-row.sum{border-top:1.5px solid #1E2A22; margin-top:5px; padding-top:9px; font-weight:700;}
+  .calc-row.sum .val{font-size:16px; font-weight:600; color:#2F6B45;}
+
+  /* ── коммуналка: отдельный контур ── */
+  .ku{margin:14px 22px; border:1.5px solid #3F6652; border-radius:8px; padding:12px 14px; background:#E4EBE1;}
+  .ku.bad{border-color:#A23B2B; background:#F3E4E1;}
+  .ku-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:9px;}
+  .ku-name{font-family:'Roboto Slab',Georgia,serif; font-size:11.5px; text-transform:uppercase;
+           letter-spacing:.09em; color:#3A4A3F;}
+  .ku-flag{font-size:10.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+           color:#2F6B45; display:flex; align-items:center; gap:5px;}
+  .ku.bad .ku-flag{color:#A23B2B;}
+  .ku-dot{width:7px; height:7px; border-radius:50%; background:currentColor; display:inline-block;}
+  .ku-row{display:flex; justify-content:space-between; font-size:12.5px; padding:3px 0; color:#3A4A3F;}
+  .ku-row .val{font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+  .ku-row.res{border-top:1px dashed #A8B5A2; margin-top:6px; padding-top:7px; font-weight:700; color:#1E2A22;}
+  .ku-note{font-size:10.5px; color:#5B6B5F; margin-top:8px; font-style:italic; line-height:1.4;}
+
+  /* ── залоги ── */
+  .dep{margin:0 22px 14px; border:1.5px solid #5B6B5F; border-radius:8px; padding:12px 14px; background:#ECEFE9;}
+  .dep-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .dep-name{font-family:'Roboto Slab',Georgia,serif; font-size:11.5px; text-transform:uppercase;
+            letter-spacing:.09em; color:#3A4A3F;}
+  .dep-flag{font-size:10.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#5B6B5F;}
+  .dep-row{display:flex; justify-content:space-between; font-size:12.5px; padding:3px 0; color:#3A4A3F;}
+  .dep-row .val{font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+  .dep-row.main{font-weight:600; color:#1E2A22;}
+  .dep-sub{margin:2px 0 4px 12px; padding-left:10px; border-left:2px solid #C9D1C2;}
+  .dep-mini{display:flex; justify-content:space-between; font-size:11px; color:#5B6B5F; padding:2px 0;}
+  .dep-mini .val{font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+  .dep-row.res{border-top:1.5px solid #1E2A22; margin-top:7px; padding-top:8px; font-weight:700; color:#1E2A22;}
+  .dep-row.res .val{font-size:14px;}
+  .dep-note{font-size:10.5px; color:#5B6B5F; margin-top:8px; font-style:italic; line-height:1.4;}
+
+  /* ── что лежит на счету ── */
+  .acct{margin:0 22px 16px; padding:12px 14px; border:2px solid #1E2A22; border-radius:8px; background:#F6F8F4;}
+  .acct-name{font-family:'Roboto Slab',Georgia,serif; font-size:11.5px; text-transform:uppercase;
+             letter-spacing:.09em; color:#5B6B5F; margin-bottom:8px;}
+  .acct-row{display:flex; justify-content:space-between; font-size:12.5px; padding:3px 0; color:#3A4A3F;}
+  .acct-row .val{font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+  .acct-row.mine{border-top:1.5px solid #1E2A22; margin-top:6px; padding-top:8px; font-weight:700; color:#1E2A22;}
+  .acct-row.mine .val{font-size:15px; font-weight:600; color:#2F6B45;}
+
+  /* ── экраны ── */
+  /* сквозные ленты кнопок — от края до края, без зазоров */
+  .topbar{position:sticky; top:0; z-index:8; background:#EEF1EA;}
+  .views{display:grid; grid-template-columns:repeat(4,1fr); gap:0; padding:0;
+         border-bottom:1px solid #C9D1C2; background:#F1F4EE;}
+  .view-btn{padding:11px 1px; border:0; border-right:1px solid #D5DCD0; border-radius:0;
+            background:#F1F4EE; color:#5B6B5F; font-family:'Roboto Slab',Georgia,serif;
+            font-size:10.5px; font-weight:700; letter-spacing:.02em; text-align:center; cursor:pointer;}
+  .view-btn:last-child{border-right:0;}
+  .view-btn.on{background:#3F6652; color:#EEF1EA;}
+
+  /* ── арендаторы ── */
+  .ten-top{padding:16px 25px 8px;}
+  .ten-title{font-family:'Roboto Slab',Georgia,serif; font-size:11.5px; text-transform:uppercase;
+             letter-spacing:.1em; color:#5B6B5F; margin-bottom:10px;}
+  .months{display:flex; align-items:center; gap:8px;}
+  .months .m{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:8px; color:#8A9188;
+             font-style:normal; flex:1; min-width:0; text-align:center; text-transform:uppercase;}
+  .ten-obj{font-family:'Roboto Slab',Georgia,serif; font-size:10.5px; text-transform:uppercase;
+           letter-spacing:.09em; color:#5B6B5F; padding:12px 16px 4px;}
+  .ten{margin:0 16px 8px; padding:10px 9px; border:1px solid #C9D1C2; border-radius:8px; background:#F6F8F4;}
+  .ten-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;}
+  .ten-name{font-size:12.5px;}
+  .ten-name b{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:10.5px; color:#5B6B5F; margin-right:5px;}
+  .ten-debt{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:12.5px; font-weight:600; color:#A23B2B;}
+  .ten-clean{font-size:10px; color:#2F6B45; font-weight:600; text-transform:uppercase; letter-spacing:.05em;}
+  .ten-line{display:flex; align-items:center; gap:8px; padding:2px 0;}
+  .ten-lbl{font-size:8.5px; color:#8A9188; text-transform:uppercase; letter-spacing:.04em;
+           width:30px; flex-shrink:0;}
+  .cells{display:flex; gap:2px; flex:1; min-width:0;}
+  .c{flex:1; min-width:0; height:15px; border-radius:2px;
+     font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:8.5px; font-style:normal;
+     line-height:15px; text-align:center; font-variant-numeric:tabular-nums; overflow:hidden;}
+  /* аренда — насыщенный тон, КУ — светлее */
+  .c.a-ok{background:#3F6652; color:#EEF1EA;}
+  .c.k-ok{background:#7B9C82; color:#1B2A20;}
+  .c.a-late{background:#B08A1E; color:#FBF6E6;}
+  .c.k-late{background:#DCC067; color:#3A3110;}
+  .c.a-debt{background:#A23B2B; color:#F6EAE7;}
+  .c.k-debt{background:#CE8175; color:#3A1610;}
+  .c.a-wait,.c.k-wait{background:#C9D1C2; color:#4A5548;}
+  .c.a-none,.c.k-none{background:transparent; border:1px dashed #C9D1C2;}
+  .c.a-future,.c.k-future{background:#E7EBE4;}
+  .half{margin-bottom:7px;}
+  .half:last-of-type{margin-bottom:0;}
+  .ten-line.hdr{padding:0 0 2px;}
+  .ten-line.hdr .m{flex:1; min-width:0; text-align:center; font-style:normal;
+       font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:7.5px; color:#9BA399;
+       text-transform:uppercase; letter-spacing:.02em;}
+  .ten-line.hdr .cells{gap:2px;}
+  .ten-detail{font-size:10.5px; color:#A23B2B; margin-top:7px; font-family:'IBM Plex Mono',ui-monospace,monospace;}
+  .ten-total{margin:14px 22px 12px; padding:11px 14px; border:2px solid #1E2A22; border-radius:8px; background:#F6F8F4;}
+  .tt-row{display:flex; justify-content:space-between; font-size:12.5px; padding:3px 0; color:#3A4A3F;}
+  .tt-row .val{font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+  .tt-row.sum{border-top:1.5px solid #1E2A22; margin-top:6px; padding-top:8px; font-weight:700; color:#1E2A22;}
+  .tt-row.sum .val{font-size:15px; font-weight:600; color:#A23B2B;}
+  .legend2{display:flex; flex-wrap:wrap; gap:10px; padding:0 22px 22px; font-size:9.5px; color:#5B6B5F;}
+  .legend2 span{display:flex; align-items:center; gap:4px;}
+  .legend2 .c{width:14px; height:9px;}
+
+  /* ── экран месяца ── */
+  .mon-title{font-family:'Roboto Slab',Georgia,serif; font-size:11.5px; text-transform:uppercase;
+             letter-spacing:.1em; color:#5B6B5F; padding:16px 22px 10px;}
+  .mon-sec{font-family:'Roboto Slab',Georgia,serif; font-size:11px; text-transform:uppercase;
+           letter-spacing:.09em; color:#5B6B5F; padding:18px 22px 8px; border-top:1px solid #C9D1C2; margin-top:12px;}
+  .step{display:flex; align-items:center; gap:9px; padding:7px 22px; border-bottom:1px dashed #D5DCD0;}
+  .st-day{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:10.5px; font-weight:600;
+          color:#8A9188; width:20px; flex-shrink:0;}
+  .st-name{flex:1; min-width:0; font-size:12.5px; color:#3A4A3F;}
+  .st-mark{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:10.5px; flex-shrink:0;}
+  .step.done .st-mark{color:#2F6B45;}
+  .step.work .st-mark{color:#C9A227;}
+  .step.wait .st-mark{color:#A23B2B;}
+  .step.done .st-name{color:#5B6B5F;}
+
+  .bill{display:flex; align-items:center; gap:6px; padding:7px 22px;}
+  .bill-name{flex:1; min-width:0; font-size:12px;}
+  .bill-name b{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:10px; color:#8A9188; margin-right:4px;}
+  .chip{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:9.5px; padding:3px 6px;
+        border-radius:3px; white-space:nowrap; flex-shrink:0;}
+  .chip.paid{background:#3F6652; color:#EEF1EA;}
+  .chip.sent{background:#E4EBE1; color:#4A5548; border:1px solid #C9D1C2;}
+  .mon-hint{font-size:10px; color:#8A9188; font-style:italic; padding:6px 22px 0;}
+
+  .sup{display:flex; align-items:baseline; gap:8px; padding:7px 22px; border-bottom:1px dashed #D5DCD0;}
+  .sup-name{flex:1; min-width:0; font-size:12.5px; color:#3A4A3F;}
+  .sup-note{font-size:9.5px; color:#8A9188; flex-shrink:0;}
+  .sup-val{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:12.5px; width:56px;
+           text-align:right; flex-shrink:0; font-variant-numeric:tabular-nums;}
+  .sup.paid .sup-name,.sup.paid .sup-val{color:#5B6B5F;}
+  .sup.open .sup-name{font-weight:600; color:#1E2A22;}
+  .sup.open .sup-note{color:#A23B2B; font-weight:600;}
+  .sup.open .sup-val{color:#A23B2B; font-weight:600;}
+
+  .mon-sec2{font-family:'Roboto Slab',Georgia,serif; font-size:11px; text-transform:uppercase;
+             letter-spacing:.09em; color:#5B6B5F; padding:16px 16px 7px;}
+  #viewCalc .sup{display:flex; align-items:baseline; gap:5px; padding:6px 16px; border-bottom:1px dashed #D5DCD0;}
+  #viewCalc .sup-name{flex:1; min-width:0; font-size:12px;}
+  #viewCalc .sup-n,#viewCalc .sup-o,#viewCalc .sup-val{
+      font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:11px; width:60px;
+      text-align:right; flex-shrink:0; font-variant-numeric:tabular-nums;}
+  #viewCalc .sup-o{color:#5B6B5F;}
+  #viewCalc .sup.hdr{border-bottom:1px solid #C9D1C2; padding-bottom:4px;}
+  #viewCalc .sup.hdr span{font-family:'Roboto Slab',Georgia,serif; font-size:8.5px; color:#8A9188;
+      text-transform:uppercase; letter-spacing:.05em;}
+  #viewCalc .sup.paid .sup-val{color:#8A9188;}
+  #viewCalc .sup.open .sup-name{font-weight:600;}
+  #viewCalc .sup.open .sup-val{color:#A23B2B; font-weight:600;}
+  #viewCalc .sup.total{border-top:1.5px solid #1E2A22; border-bottom:1.5px solid #1E2A22;
+      margin-top:4px; font-weight:700; padding-top:8px; padding-bottom:8px;}
+  #viewCalc .sup.total .sup-val{color:#A23B2B;}
+  #viewCalc .mon-hint{padding:8px 16px 0;}
+
+  .section-label{font-family:'Roboto Slab',Georgia,serif; font-size:11.5px; text-transform:uppercase;
+                 letter-spacing:.1em; color:#5B6B5F; padding:14px 22px 6px;}
+
+  /* ── объекты ── */
+  .obj{margin:0 22px 12px; border:1px solid #C9D1C2; border-radius:8px; overflow:hidden; background:#F6F8F4;}
+  .obj-head{display:flex; justify-content:space-between; align-items:baseline;
+            padding:9px 13px; background:#E4EAE0; border-bottom:1px solid #C9D1C2;}
+  .obj-name{font-family:'Roboto Slab',Georgia,serif; font-size:12.5px; font-weight:700;}
+  .obj-sum{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:12.5px; font-weight:600;
+           font-variant-numeric:tabular-nums;}
+  .row{display:flex; align-items:center; gap:10px; padding:8px 13px; border-bottom:1px dashed #D5DCD0;}
+  .row:last-child{border-bottom:none;}
+  .row-code{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:10.5px; font-weight:600;
+            color:#5B6B5F; width:24px; flex-shrink:0;}
+  .row-info{flex:1; min-width:0;}
+  .row-title{font-size:12.5px; font-weight:600;}
+  .row-sub{font-size:10.5px; color:#5B6B5F; margin-top:1px;}
+  .tags{display:flex; gap:4px; flex-shrink:0;}
+  .tag{font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+       padding:3px 5px; border:1.2px solid currentColor; border-radius:3px; white-space:nowrap;}
+  .tag.ok{color:#2F6B45;}
+  .tag.no{color:#A23B2B;}
+  .tag.wait{color:#8A7A3B;}
+
+  .total-row{display:flex; justify-content:space-between; margin:0 22px; padding:11px 0;
+             border-top:2px solid #1E2A22; border-bottom:2px solid #1E2A22;
+             font-family:'Roboto Slab',Georgia,serif; font-weight:700; font-size:12.5px;}
+  .total-row .v{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:14px; font-variant-numeric:tabular-nums;}
+
+  .feed-row{display:flex; align-items:center; gap:10px; padding:7px 22px;}
+  .feed-dot{width:6px; height:6px; border-radius:50%; flex-shrink:0;}
+  .feed-dot.in{background:#3F6652;} .feed-dot.out{background:#A23B2B;} .feed-dot.ku{background:#5B6B5F;}
+  .feed-text{flex:1; font-size:12px;}
+  .feed-via{font-size:9.5px; color:#8A9188; font-style:italic;}
+  .feed-amt{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:12px; font-weight:600;
+            font-variant-numeric:tabular-nums;}
+
+  @media (max-width:560px){
+    .shell{padding:0; gap:0; max-width:none;}
+    .shell > .eyebrow, .shell > h1, .shell > .note{display:none;}
+    .phone{width:100%; max-width:100%; height:100vh; height:100dvh; max-height:none;
+           border-radius:0; box-shadow:none;}
+    .grabber{display:none;}
+  }
+
+  .foot{margin:16px 22px 24px; padding:11px 14px; border:1.5px solid #1E2A22; display:flex; gap:8px;}
+  .foot-txt{font-size:11.5px; color:#5B6B5F; font-style:italic; line-height:1.45;}
+
+  /* ── заглушка при неудачной загрузке данных ── */
+  .stub{padding:48px 26px; text-align:center;}
+  .stub-i{font-size:30px; margin-bottom:12px;}
+  .stub-t{font-family:'Roboto Slab',Georgia,serif; font-size:14px; font-weight:700; margin-bottom:8px;}
+  .stub-p{font-size:12.5px; color:#5B6B5F; line-height:1.5; max-width:280px; margin:0 auto 16px;}
+  .stub-b{border:1.5px solid #3F6652; color:#3F6652; background:transparent; border-radius:6px;
+          padding:9px 18px; font-family:'Roboto Slab',Georgia,serif; font-size:12px; font-weight:700;
+          cursor:pointer;}
+</style>
+
+<div class="shell">
+  <p class="eyebrow">Учёт аренды</p>
+  <h1>Гроссбух</h1>
+  <p class="note">Данные берутся из файла data.json — правится он, а не страница.</p>
+
+  <div class="phone">
+    <div class="grabber"></div>
+
+    <div class="topbar">
+      <div class="head">
+        <span class="head-title">Книга учёта</span>
+        <span class="nav">
+          <button class="arr" id="prev" type="button">&lsaquo;</button>
+          <span class="head-period" id="headPeriod">—</span>
+          <button class="arr" id="next" type="button">&rsaquo;</button>
+        </span>
+      </div>
+      <div class="views">
+        <button class="view-btn on" data-v="main">Итоги</button>
+        <button class="view-btn" data-v="ten">Арендаторы</button>
+        <button class="view-btn" data-v="mon">Задачи</button>
+        <button class="view-btn" data-v="calc">Расчёты</button>
+      </div>
+      <div class="tabs" id="tabs">
+        <button class="tab on" data-k="m">Месяц</button>
+        <button class="tab" data-k="q">Квартал</button>
+        <button class="tab" data-k="h">Полгода</button>
+        <button class="tab" data-k="n">9 мес</button>
+        <button class="tab" data-k="y">Год</button>
+      </div>
+    </div>
+
+    <div id="stub" class="stub" style="display:none">
+      <div class="stub-i">📗</div>
+      <div class="stub-t">Данные не загрузились</div>
+      <div class="stub-p" id="stubText">Файл data.json не найден рядом со страницей.</div>
+      <button class="stub-b" type="button" onclick="location.reload()">Попробовать снова</button>
+    </div>
+
+    <div id="app" style="display:none">
+      <div id="viewMain">
+        <div class="period" id="period">—</div>
+        <div class="hero">
+          <div class="hero-label">Мои деньги за период</div>
+          <div class="hero-value num" id="heroVal">—</div>
+          <div class="hero-hint" id="heroHint">—</div>
+        </div>
+        <div class="calc">
+          <div class="calc-row"><span class="lbl">Аренда получена</span><span class="val" id="vArenda">—</span></div>
+          <div class="calc-row minus"><span class="lbl" id="lNalog">Налог</span><span class="val" id="vNalog">—</span></div>
+          <div class="calc-row minus"><span class="lbl">Ремонт и расходы</span><span class="val" id="vRash">—</span></div>
+          <div class="calc-row sub"><span class="lbl">Чистое</span><span class="val" id="vChist">—</span></div>
+          <div class="calc-row minus"><span class="lbl" id="lRez">В резерв</span><span class="val" id="vRez">—</span></div>
+          <div class="calc-row sum"><span class="lbl">Моё</span><span class="val" id="vMoe">—</span></div>
+        </div>
+
+        <div class="ku" id="kuBox">
+          <div class="ku-top">
+            <span class="ku-name">Коммуналка · транзит</span>
+            <span class="ku-flag" id="kuFlag"><i class="ku-dot"></i>—</span>
+          </div>
+          <div class="ku-row"><span>Получено от арендаторов</span><span class="val" id="kIn">—</span></div>
+          <div class="ku-row"><span>Оплачено поставщикам</span><span class="val" id="kOut">—</span></div>
+          <div class="ku-row res"><span>Разница</span><span class="val" id="kDiff">—</span></div>
+          <div class="ku-note">Эти деньги не мои — они проходят насквозь. Плюс допустим, минус означает, что заплачено из своих.</div>
+        </div>
+
+        <div class="acct">
+          <div class="acct-name">Расчётный счёт</div>
+          <div class="acct-row"><span>Лежит всего</span><span class="val" id="aAll">—</span></div>
+          <div class="acct-row"><span>из них чужая коммуналка</span><span class="val" id="aKu">—</span></div>
+          <div class="acct-row mine"><span>Моих</span><span class="val" id="aMine">—</span></div>
+        </div>
+
+        <div class="dep">
+          <div class="dep-top">
+            <span class="dep-name">Депозит · отдельный счёт</span>
+            <span class="dep-flag" id="depFlag">—</span>
+          </div>
+          <div class="dep-row main"><span>Резерв — моё</span><span class="val" id="depRez">—</span></div>
+          <div class="dep-row main"><span>Залоги — чужое</span><span class="val" id="depZal">—</span></div>
+          <div class="dep-sub" id="depList"></div>
+          <div class="dep-row res"><span>Всего на депозите</span><span class="val" id="depAll">—</span></div>
+          <div class="dep-note">Залоги возвращаются при выезде или идут в зачёт последнего месяца. Доходом не являются.</div>
+        </div>
+
+        <div class="section-label">Объекты · текущий месяц</div>
+        <div id="objList"></div>
+        <div class="total-row"><span>Начислено за месяц</span><span class="v num" id="objTotal">—</span></div>
+        <div class="foot"><span class="foot-txt">Твои деньги — только аренда за вычетом налога, расходов и резерва. Коммуналка и залоги лежат отдельно.</span></div>
+      </div>
+
+      <div id="viewTen" style="display:none">
+        <div class="ten-top"><div class="ten-title" id="tenTitle">Платежи · тысяч ₽</div></div>
+        <div id="tenList"></div>
+        <div class="ten-total">
+          <div class="tt-row"><span>Долг по аренде</span><span class="val" id="dAr">—</span></div>
+          <div class="tt-row"><span>Долг по коммуналке</span><span class="val" id="dKu">—</span></div>
+          <div class="tt-row sum"><span>Всего не получено</span><span class="val" id="dAll">—</span></div>
+        </div>
+        <div class="legend2">
+          <span><i class="c a-ok"></i><i class="c k-ok"></i>оплачено · аренда и КУ</span>
+          <span><i class="c a-late"></i>с просрочкой</span>
+          <span><i class="c a-debt"></i><i class="c k-debt"></i>долг</span>
+          <span><i class="c a-wait"></i>срок не вышел</span>
+          <span><i class="c a-none"></i>не арендовал</span>
+          <span><i class="c a-future"></i>месяц не наступил</span>
+        </div>
+      </div>
+
+      <div id="viewMon" style="display:none">
+        <div class="mon-title" id="monTitle">Текущий месяц</div>
+        <div id="stepList"></div>
+        <div class="mon-sec">Счета арендаторам</div>
+        <div id="billList"></div>
+        <div class="mon-hint">Тёмный — оплачен, светлый — выставлен и ждёт оплаты.</div>
+        <div class="mon-sec">Поставщики · подробно на вкладке «Расчёты»</div>
+        <div id="supShort"></div>
+      </div>
+
+      <div id="viewCalc" style="display:none">
+        <div class="mon-title">Взаиморасчёты по коммуналке</div>
+        <div class="mon-sec2">Поставщики</div>
+        <div class="sup hdr"><span class="sup-name"></span><span class="sup-n">счета</span>
+          <span class="sup-o">оплачено</span><span class="sup-val">остаток</span></div>
+        <div id="supRows"></div>
+        <div class="sup total"><span class="sup-name">Итого</span><span class="sup-n" id="tN">—</span>
+          <span class="sup-o" id="tO">—</span><span class="sup-val" id="tD">—</span></div>
+        <div class="mon-hint">Счета и оплаты — за выбранный период. Остаток — накопленный долг на его конец.</div>
+
+        <div class="mon-sec2">Арендаторы</div>
+        <div class="ten-total" style="margin-top:0">
+          <div class="tt-row"><span>Начислено за период</span><span class="val" id="cNach">—</span></div>
+          <div class="tt-row"><span>Получено за период</span><span class="val" id="cPol">—</span></div>
+          <div class="tt-row sum"><span>Должны мне всего</span><span class="val" id="cDolg">—</span></div>
+        </div>
+
+        <div class="mon-sec2">Итог по контуру</div>
+        <div class="ku" id="cBox" style="margin-top:0">
+          <div class="ku-row"><span>Мне должны арендаторы</span><span class="val" id="cA">—</span></div>
+          <div class="ku-row"><span>Я должна поставщикам</span><span class="val" id="cB">—</span></div>
+          <div class="ku-row res"><span>Мой карман</span><span class="val" id="cC">—</span></div>
+          <div class="ku-note" id="cNote"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var MES   = ["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"];
+  var MESR  = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+  var SHORT = ["ЯНВ","ФЕВ","МАР","АПР","МАЙ","ИЮН","ИЮЛ","АВГ","СЕН","ОКТ","НОЯ","ДЕК"];
+  var DAYS  = [31,28,31,30,31,30,31,31,30,31,30,31];
+  var RIM   = ["I","II","III","IV"];
+
+  var D = null, kind = "m", idx = 0, last = 0, view = "main";
+
+  function $(id){ return document.getElementById(id); }
+  function nf(n){ return String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
+  function th(v){ return v ? (v/1000).toFixed(1).replace(".", ",") : ""; }
+  function sum(a, i0, i1){ var t = 0; for (var i = i0; i < i1 && i < a.length; i++) t += a[i] || 0; return t; }
+
+  // ── период ───────────────────────────────────────────────
+  function range(){
+    if (kind === "m") return [idx, idx + 1];
+    if (kind === "q") { var q = Math.floor(idx / 3); return [q*3, q*3 + 3]; }
+    if (kind === "h") { var h = Math.floor(idx / 6); return [h*6, h*6 + 6]; }
+    if (kind === "n") return [0, Math.min(9, last + 1)];
+    return [0, 12];
+  }
+  function clip(r){ return [Math.min(r[0], last + 1), Math.min(r[1], last + 1)]; }
+  function step(){ return kind === "m" ? 1 : kind === "q" ? 3 : 6; }
+
+  function headText(){
+    if (kind === "m") return SHORT[idx] + " " + D["период"]["год"];
+    if (kind === "q") return RIM[Math.floor(idx/3)] + " КВ " + D["период"]["год"];
+    if (kind === "h") return (Math.floor(idx/6) + 1) + " ПОЛ " + D["период"]["год"];
+    if (kind === "n") return "9 МЕС " + D["период"]["год"];
+    return D["период"]["год"] + " ГОД";
+  }
+  function label(){
+    var r = clip(range()), god = D["период"]["год"];
+    if (kind === "m") return "1 — " + DAYS[idx] + " " + MESR[idx] + " " + god;
+    if (kind === "q") return RIM[Math.floor(idx/3)] + " квартал · " + MES[r[0]] + " — " + MES[r[1]-1];
+    if (kind === "h") return (Math.floor(idx/6)+1) + "-е полугодие · " + MES[r[0]] + " — " + MES[r[1]-1];
+    if (kind === "n") return "январь — " + MES[last] + " " + god;
+    return god + " год · факт на " + DAYS[last] + " " + MESR[last];
+  }
+
+  // ── производные ряды ─────────────────────────────────────
+  function kuNach(m){ var t=0; for (var i=0;i<D["арендаторы"].length;i++) t += D["арендаторы"][i]["ку_начислено"][m]||0; return t; }
+  function kuPol(m){
+    var t = 0;
+    for (var i = 0; i < D["арендаторы"].length; i++) {
+      var a = D["арендаторы"][i], s = a["статус_ку"][m];
+      if (s === "ok" || s === "late") t += a["ку_начислено"][m] || 0;
+    }
+    return t;
+  }
+  function supN(m){ var t=0; for (var i=0;i<D["поставщики"].length;i++) t += D["поставщики"][i]["начислено"][m]||0; return t; }
+  function supO(m){ var t=0; for (var i=0;i<D["поставщики"].length;i++) t += D["поставщики"][i]["оплачено"][m]||0; return t; }
+  function series(f){ var a=[]; for (var m=0;m<12;m++) a.push(f(m)||0); return a; }
+
+  // ── главный пересчёт ─────────────────────────────────────
+  function show(){
+    var r  = clip(range()), i0 = r[0], i1 = r[1];
+    var st = D["ставки"], nalog = st["налог_процент"]/100, rez = st["резерв_процент"]/100;
+
+    var ar = sum(D["аренда_по_месяцам"], i0, i1);
+    var ra = sum(D["расходы_по_месяцам"], i0, i1);
+    var na = Math.round(ar * nalog);
+    var ch = ar - na - ra;
+    var rz = Math.round(ch * rez);
+    var moe = ch - rz;
+
+    var ki = sum(series(kuPol), i0, i1);
+    var ko = sum(series(supO), i0, i1);
+    var kd = ki - ko;
+
+    $("headPeriod").textContent = headText();
+    $("period").textContent     = label();
+    $("heroVal").textContent    = nf(moe) + " ₽";
+    $("heroHint").textContent   = "Аренда за вычетом налога " + st["налог_процент"] + " %, расходов и " +
+                                  st["резерв_процент"] + " % в резерв. Коммуналка и залоги сюда не входят.";
+    $("lNalog").textContent = "Налог " + st["налог_процент"] + " %";
+    $("lRez").textContent   = "В резерв " + st["резерв_процент"] + " %";
+    $("vArenda").textContent = nf(ar);
+    $("vNalog").textContent  = "− " + nf(na);
+    $("vRash").textContent   = "− " + nf(ra);
+    $("vChist").textContent  = nf(ch);
+    $("vRez").textContent    = "− " + nf(rz);
+    $("vMoe").textContent    = nf(moe);
+
+    $("kIn").textContent   = nf(ki);
+    $("kOut").textContent  = "− " + nf(ko);
+    $("kDiff").textContent = (kd < 0 ? "− " : "+ ") + nf(kd);
+    $("kuBox").className   = kd < 0 ? "ku bad" : "ku";
+    $("kuFlag").innerHTML  = '<i class="ku-dot"></i>' + (kd < 0 ? "не сходится" : "сходится");
+
+    // расчётный счёт: моё плюс то, что арендаторы уже заплатили, а поставщикам ещё не ушло
+    var kuOnHand = sum(series(kuPol), 0, i1) - sum(series(supO), 0, i1);
+    if (kuOnHand < 0) kuOnHand = 0;
+    $("aKu").textContent   = "− " + nf(kuOnHand);
+    $("aMine").textContent = nf(moe);
+    $("aAll").textContent  = nf(moe + kuOnHand);
+
+    // депозит
+    var zal = 0, list = "", cnt = 0;
+    for (var i = 0; i < D["арендаторы"].length; i++) {
+      var a = D["арендаторы"][i];
+      if (a["залог"]) { zal += a["залог"]; cnt++;
+        list += '<div class="dep-mini"><span>' + a["имя"] + '</span><span class="val">' + nf(a["залог"]) + '</span></div>'; }
+    }
+    var rezAll = D["депозит"]["резерв_накоплено_на_начало_года"] + Math.round((sum(D["аренда_по_месяцам"],0,last+1)
+                 - Math.round(sum(D["аренда_по_месяцам"],0,last+1)*nalog) - sum(D["расходы_по_месяцам"],0,last+1)) * rez);
+    $("depRez").textContent = nf(rezAll);
+    $("depZal").textContent = nf(zal);
+    $("depList").innerHTML  = list;
+    $("depAll").textContent = nf(rezAll + zal);
+    $("depFlag").textContent = cnt + " из " + D["арендаторы"].length + " · на сегодня";
+
+    renderObjects();
+    renderCalc(i0, i1);
+
+    var fixed = (kind === "n" || kind === "y");
+    $("prev").disabled = fixed || (idx - step() < 0);
+    $("next").disabled = fixed || (idx + step() > last);
+
+    var tabs = document.querySelectorAll(".tab");
+    for (var t = 0; t < tabs.length; t++)
+      tabs[t].className = (tabs[t].getAttribute("data-k") === kind) ? "tab on" : "tab";
+  }
+
+  // ── объекты на экране «Итоги» ────────────────────────────
+  function renderObjects(){
+    var html = "", total = 0;
+    for (var o = 0; o < D["объекты"].length; o++) {
+      var ob = D["объекты"][o], rows = "", sm = 0;
+      for (var i = 0; i < D["арендаторы"].length; i++) {
+        var a = D["арендаторы"][i];
+        if (a["объект"] !== ob["название"]) continue;
+        var sa = a["статус_аренды"][last], sk = a["статус_ку"][last];
+        if (sa !== "none") sm += a["аренда_в_месяц"];
+        var cls = { ok:"ok", late:"wait", debt:"no", wait:"wait", none:"wait" };
+        rows += '<div class="row"><span class="row-code">' + a["код"] + '</span>' +
+                '<div class="row-info"><div class="row-title">' + a["имя"] + '</div>' +
+                '<div class="row-sub">' + nf(a["аренда_в_месяц"]) + ' + КУ ' + nf(a["ку_начислено"][last]) + '</div></div>' +
+                '<div class="tags"><span class="tag ' + (cls[sa]||"wait") + '">аренда</span>' +
+                '<span class="tag ' + (cls[sk]||"wait") + '">ку</span></div></div>';
+      }
+      total += sm;
+      html += '<div class="obj"><div class="obj-head"><span class="obj-name">' + ob["название"] +
+              (ob["подпись"] ? " · " + ob["подпись"] : "") + '</span>' +
+              '<span class="obj-sum">' + nf(sm) + '</span></div>' + rows + '</div>';
+    }
+    $("objList").innerHTML = html;
+    $("objTotal").textContent = nf(total) + " ₽";
+  }
+
+  // ── экран «Арендаторы» ───────────────────────────────────
+  function cells(kindPrefix, states, sums, i0, i1){
+    var out = "";
+    for (var i = i0; i < i1; i++) {
+      var st = states[i] || "future";
+      var txt = (st === "none" || st === "future") ? "" : th(sums[i]);
+      out += '<i class="c ' + kindPrefix + "-" + st + '">' + txt + '</i>';
+    }
+    return out;
+  }
+  function half(a, rentRow, i0, i1){
+    var m = "";
+    for (var i = i0; i < i1; i++) m += '<i class="m">' + MES[i].slice(0,3) + '</i>';
+    return '<div class="half">' +
+      '<div class="ten-line hdr"><span class="ten-lbl"></span><span class="cells">' + m + '</span></div>' +
+      '<div class="ten-line"><span class="ten-lbl">аренда</span><span class="cells">' +
+        cells("a", a["статус_аренды"], rentRow, i0, i1) + '</span></div>' +
+      '<div class="ten-line"><span class="ten-lbl">ку</span><span class="cells">' +
+        cells("k", a["статус_ку"], a["ку_начислено"], i0, i1) + '</span></div></div>';
+  }
+  function renderTenants(){
+    var html = "", curObj = null, dAr = 0, dKu = 0;
+    for (var i = 0; i < D["арендаторы"].length; i++) {
+      var a = D["арендаторы"][i];
+      var rent = [], ar = 0, ku = 0;
+      for (var m = 0; m < 12; m++) {
+        var s = a["статус_аренды"][m];
+        rent.push((!s || s === "none" || s === "future") ? 0 : a["аренда_в_месяц"]);
+        if (s === "debt") ar += a["аренда_в_месяц"];
+        if (a["статус_ку"][m] === "debt") ku += a["ку_начислено"][m];
+      }
+      dAr += ar; dKu += ku;
+      if (a["объект"] !== curObj) { curObj = a["объект"]; html += '<div class="ten-obj">' + curObj + '</div>'; }
+      var badge = (ar + ku) ? '<span class="ten-debt">' + nf(ar+ku) + ' ₽</span>'
+                            : '<span class="ten-clean">без долгов</span>';
+      var det = [];
+      if (ar) det.push("аренда " + nf(ar));
+      if (ku) det.push("КУ " + nf(ku));
+      html += '<div class="ten"><div class="ten-head"><span class="ten-name"><b>' + a["код"] + '</b> ' +
+              a["имя"] + '</span>' + badge + '</div>' + half(a, rent, 0, 6) + half(a, rent, 6, 12) +
+              (det.length ? '<div class="ten-detail">долг: ' + det.join(" · ") + '</div>' : '') + '</div>';
+    }
+    $("tenList").innerHTML = html;
+    $("tenTitle").textContent = "Платежи за " + D["период"]["год"] + " год · тысяч ₽";
+    $("dAr").textContent  = nf(dAr);
+    $("dKu").textContent  = nf(dKu);
+    $("dAll").textContent = nf(dAr + dKu) + " ₽";
+  }
+
+  // ── экран «Задачи» ───────────────────────────────────────
+  function renderMonth(){
+    var ico = { done:"✓", work:"•", wait:"•" }, html = "";
+    var dolgSup = sum(series(supN), 0, last+1) - sum(series(supO), 0, last+1);
+    for (var i = 0; i < D["задачи_месяца"].length; i++) {
+      var z = D["задачи_месяца"][i];
+      var mark = z["отметка"] || (z["дело"].indexOf("поставщик") >= 0 ? "осталось " + nf(dolgSup) : "");
+      html += '<div class="step ' + z["статус"] + '"><span class="st-day">' + z["день"] + '</span>' +
+              '<span class="st-name">' + z["дело"] + '</span>' +
+              '<span class="st-mark">' + ico[z["статус"]] + " " + mark + '</span></div>';
+    }
+    $("stepList").innerHTML = html;
+    $("monTitle").textContent = MES[last].charAt(0).toUpperCase() + MES[last].slice(1) + " · текущий месяц";
+
+    var bills = "";
+    for (var b = 0; b < D["счета_текущего_месяца"].length; b++) {
+      var s = D["счета_текущего_месяца"][b], a = null;
+      for (var k = 0; k < D["арендаторы"].length; k++) if (D["арендаторы"][k]["код"] === s["код"]) a = D["арендаторы"][k];
+      if (!a) continue;
+      bills += '<div class="bill"><span class="bill-name"><b>' + a["код"] + '</b> ' + a["имя"] + '</span>' +
+               '<span class="chip ' + s["аренда"] + '">аренда ' + nf(a["аренда_в_месяц"]) + '</span>' +
+               '<span class="chip ' + s["ку"] + '">ку ' + nf(a["ку_начислено"][last]) + '</span></div>';
+    }
+    $("billList").innerHTML = bills;
+
+    var sup = "";
+    for (var p = 0; p < D["поставщики"].length; p++) {
+      var sp = D["поставщики"][p];
+      var ost = sum(sp["начислено"], 0, last+1) - sum(sp["оплачено"], 0, last+1);
+      sup += '<div class="sup ' + (ost ? "open" : "paid") + '"><span class="sup-name">' + sp["название"] + '</span>' +
+             '<span class="sup-note">' + (ost ? "к оплате" : "закрыто") + '</span>' +
+             '<span class="sup-val">' + (ost ? nf(ost) : "—") + '</span></div>';
+    }
+    $("supShort").innerHTML = sup;
+  }
+
+  // ── экран «Расчёты» ──────────────────────────────────────
+  function renderCalc(i0, i1){
+    var html = "", tn = 0, to = 0, td = 0;
+    for (var i = 0; i < D["поставщики"].length; i++) {
+      var sp = D["поставщики"][i];
+      var n = sum(sp["начислено"], i0, i1), o = sum(sp["оплачено"], i0, i1);
+      var ost = sum(sp["начислено"], 0, i1) - sum(sp["оплачено"], 0, i1);
+      tn += n; to += o; td += ost;
+      html += '<div class="sup ' + (ost ? "open" : "paid") + '"><span class="sup-name">' + sp["название"] +
+              '</span><span class="sup-n">' + nf(n) + '</span><span class="sup-o">' + nf(o) +
+              '</span><span class="sup-val">' + (ost ? nf(ost) : "—") + '</span></div>';
+    }
+    $("supRows").innerHTML = html;
+    $("tN").textContent = nf(tn);
+    $("tO").textContent = nf(to);
+    $("tD").textContent = nf(td);
+
+    var an = sum(series(kuNach), i0, i1), ap = sum(series(kuPol), i0, i1);
+    var dolg = sum(series(kuNach), 0, i1) - sum(series(kuPol), 0, i1);
+    $("cNach").textContent = nf(an);
+    $("cPol").textContent  = nf(ap);
+    $("cDolg").textContent = nf(dolg) + " ₽";
+
+    var karman = dolg - td;
+    $("cA").textContent = nf(dolg);
+    $("cB").textContent = "− " + nf(td);
+    $("cC").textContent = (karman < 0 ? "− " : "+ ") + nf(karman);
+    $("cBox").className = (karman < -5000) ? "ku bad" : "ku";
+    $("cNote").textContent = "Мне ещё должны " + nf(dolg) + ", я ещё должна " + nf(td) +
+                             ". Когда все рассчитаются, контур сойдётся в ноль.";
+  }
+
+  // ── переключение экранов ─────────────────────────────────
+  function setView(v){
+    view = v;
+    $("viewMain").style.display = (v === "main") ? "" : "none";
+    $("viewTen").style.display  = (v === "ten")  ? "" : "none";
+    $("viewMon").style.display  = (v === "mon")  ? "" : "none";
+    $("viewCalc").style.display = (v === "calc") ? "" : "none";
+    var withPeriod = (v === "main" || v === "calc");
+    $("tabs").style.display    = withPeriod ? "" : "none";
+    $("prev").style.visibility = withPeriod ? "" : "hidden";
+    $("next").style.visibility = withPeriod ? "" : "hidden";
+    var b = document.querySelectorAll(".view-btn");
+    for (var i = 0; i < b.length; i++)
+      b[i].className = (b[i].getAttribute("data-v") === v) ? "view-btn on" : "view-btn";
+  }
+
+  function bind(){
+    $("tabs").addEventListener("click", function (e) {
+      var b = e.target.closest(".tab"); if (!b) return;
+      kind = b.getAttribute("data-k");
+      if (kind === "q") idx = Math.min(Math.floor(idx/3)*3 + 2, last);
+      if (kind === "h") idx = Math.min(Math.floor(idx/6)*6 + 5, last);
+      show();
+    });
+    $("prev").addEventListener("click", function () { if (idx - step() >= 0) { idx -= step(); show(); } });
+    $("next").addEventListener("click", function () { if (idx + step() <= last) { idx += step(); show(); } });
+    var b = document.querySelectorAll(".view-btn");
+    for (var i = 0; i < b.length; i++)
+      b[i].addEventListener("click", function () { setView(this.getAttribute("data-v")); });
+  }
+
+  function start(d){
+    D = d;
+    last = Math.max(0, (D["период"]["последний_закрытый_месяц"] || 1) - 1);
+    idx = last;
+    $("stub").style.display = "none";
+    $("app").style.display  = "";
+    bind();
+    renderTenants();
+    renderMonth();
+    show();
+    setView("main");
+  }
+
+  function fail(msg){
+    $("app").style.display  = "none";
+    $("stub").style.display = "";
+    $("stubText").textContent = msg;
+  }
+
+  // Telegram: развернуть на весь экран, если открыто внутри мессенджера
+  try {
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+    }
+  } catch (e) {}
+
+  fetch("data.json?v=" + Date.now(), { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(start)
+    .catch(function (e) {
+      fail(location.protocol === "file:"
+        ? "Страница открыта прямо с диска, и браузер не даёт ей прочитать data.json. Так и должно быть — файл заработает, когда приложение окажется в интернете."
+        : "Файл data.json не найден рядом со страницей или содержит ошибку. " + e.message);
+    });
+})();
+
+</script>
