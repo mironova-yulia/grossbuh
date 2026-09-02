@@ -773,6 +773,33 @@
     setTimeout(function(){ if (c.parentNode) c.parentNode.removeChild(c); }, 600);
   }
 
+  // Телеграм грузит страницу за своей заставкой, пока окно ещё не показано.
+  // Если отсчитывать от загрузки данных, обложка успевает исчезнуть до того,
+  // как человек увидит экран. Поэтому ждём, пока страница станет видимой,
+  // и только тогда запускаем отсчёт.
+  function scheduleCoverHide(){
+    var started = false;
+    function run(){
+      if (started) return;
+      started = true;
+      setTimeout(hideCover, 2200);
+    }
+    if (document.visibilityState === "visible") {
+      requestAnimationFrame(function(){ requestAnimationFrame(run); });
+    } else {
+      document.addEventListener("visibilitychange", function h(){
+        if (document.visibilityState === "visible") {
+          document.removeEventListener("visibilitychange", h);
+          run();
+        }
+      });
+    }
+    // страховка: если событие видимости не придёт, обложка всё равно уйдёт
+    setTimeout(run, 6000);
+    var c = document.getElementById("cover");
+    if (c) c.addEventListener("click", hideCover);   // тап пропускает обложку
+  }
+
   function start(d){
     D = d;
     last = Math.max(0, (D["период"]["последний_закрытый_месяц"] || 1) - 1);
@@ -784,7 +811,7 @@
     renderMonth();
     show();
     setView("main");
-    setTimeout(hideCover, 1400);
+    scheduleCoverHide();
   }
 
   function fail(msg){
